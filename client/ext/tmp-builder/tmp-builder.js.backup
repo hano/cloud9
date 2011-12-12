@@ -1,0 +1,157 @@
+/**
+ * Extension Template for the Cloud9 IDE client
+ *
+ * Inserts a context menu item under the "Edit" menu, which, upon being
+ * clicked displays a simple window with a "Close" button
+ *
+ * This file is stripped of comments from extension_template.js in order to
+ * provide a quick template for future extensions. Please reference
+ * extension_template.js to see comprehensive documentation of extension
+ * functionality
+ *
+ * @copyright 2011, Ajax.org B.V.
+ * @license GPLv3 <http://www.gnu.org/licenses/gpl.txt>
+ */
+
+define(function(require, exports, module) {
+
+    var ide = require("core/ide");
+    var ext = require("core/ext");
+    var code = require("ext/code/code");
+    //var markup = require("text!ext/tmp-builder/tmp-builder.xml");
+    var editors = require("ext/editors/editors");
+    var panels = require("ext/panels/panels");
+
+    var BuilderTypes = [
+        "application/hano"
+    ];
+
+    module.exports = ext.register("ext/tmp-builder/tmp-builder", {
+        name    : "Builder Viewer",
+        dev     : "mwaysolutions.com",
+        contentTypes : BuilderTypes,
+        type    : ext.EDITOR,
+        markup  : null,
+        deps    : [editors],
+
+        nodes : [],
+        init : function(amlNode) {
+            console.log('own init');
+
+            tabEditors.addEventListener("afterswitch", function(e) {
+                console.log('afterswitch');
+                var page = e.nextPage;
+                if (page) {
+                    var node = _self.model.queryNode("//node()[@path='" + page.$model.data.getAttribute("path") + "']");
+                    if (node)
+                        lstOpenFiles.select(node);
+                }
+            });
+        },
+
+        hook : function() {
+            var _self = this;
+
+            panels.register(this);
+
+            var el = (navbar.firstChild["class"] == "project_files") ? navbar.childNodes[1] : navbar.firstChild;
+            var btn = this.button = navbar.insertBefore(new apf.button({
+                skin    : "mnubtn",
+                state   : "true",
+                "class" : "visual_editor",
+                caption : "TMP-Builder-2"
+            }), el);
+
+
+            btn.addEventListener("mousedown", function(e) {
+                console.log('own mousedown 1');
+                var value = this.value;
+                if (navbar.current && (navbar.current != _self || value)) {
+                    console.log('own mousedown 2');
+                    navbar.current.disable(navbar.current == _self);
+                    if (value) {
+                        console.log('own mousedown 3');
+                        return;
+                    }
+                }
+
+                panels.initPanel(_self);
+                _self.enable(true);
+            });
+
+            function sendWatchFile(path) {
+                ide.socket.json.send({
+                    "command"     : "watcher",
+                    "type"        : "watchFile",
+                    "path"        : ide.workspaceDir + path.slice(ide.davPrefix.length)
+                });
+            }
+
+            function sendUnwatchFile(path) {
+                ide.socket.json.send({
+                    "command"     : "watcher",
+                    "type"        : "unwatchFile",
+                    "path"        : ide.workspaceDir + path.slice(ide.davPrefix.length)
+                });
+            }
+
+        },
+        /*
+         enable : function(noButton) {
+         this.nodes.each(function(item) {
+         item.enable();
+         });
+         if (!noButton) {
+         this.button.setValue(true);
+         if (navbar.current && (navbar.current != this))
+         navbar.current.disable(false);
+         }
+         },
+
+         disable : function(noButton) {
+         this.nodes.each(function(item) {
+         item.disable();
+         });
+         if (!noButton) {
+         this.button.setValue(false);
+         }
+         },
+         */
+        enable : function(noButton) {
+            console.log('own enable');
+            if (self.winOpenFiles)
+                winOpenFiles.show();
+            colLeft.show();
+            if (!noButton) {
+                this.button.setValue(true);
+                if (navbar.current && (navbar.current != this))
+                    navbar.current.disable(false);
+            }
+            splitterPanelLeft.show();
+            navbar.current = this;
+        },
+
+        disable : function(noButton) {
+            if (self.winOpenFiles)
+                winOpenFiles.hide();
+            if (!noButton)
+                this.button.setValue(false);
+
+            splitterPanelLeft.hide();
+        },
+
+        destroy : function() {
+            panels.unregister(this);
+            this.nodes.each(function(item) {
+                item.destroy(true, true);
+            });
+            this.nodes = [];
+        },
+
+        closeExtensionTemplateWindow : function() {
+            //this.winExtensionTemplate.hide();
+        }
+    });
+
+})
+    ;

@@ -1,0 +1,7 @@
+.mnubtn.tmp_builder .icon{
+    background-image: url(/static/style/images/tmp-builder.png);
+}
+
+.tmp-reload .c9-label{
+    display: none;
+}

@@ -1,0 +1,51 @@
+<a:application xmlns:a="http://ajax.org/2005/aml">
+    <a:window id="winTmpBuilder"
+              flex="1"
+              skin="fm-window"
+              title="The-M-Project Builder"
+              modal="false"
+              visible="false"
+              buttons="close"
+              optimize="true"
+            >
+        <a:button
+                top="-22"
+                skin="header-btn"
+                right="5"
+                icon="refresh.png"
+                onclick="browserTmpBuilder.reload()"
+                />
+        <a:hbox
+                anchors="0 0 0 0"
+                overflow="hidden"
+                >
+            <a:browser
+                    flex="1"
+                    id="browserTmpBuilder"
+                    src=""
+                    width="100%"
+                    >
+            </a:browser>
+        </a:hbox>
+    </a:window>
+
+    <a:tab id="tabTmpBuilder" skin="docktab" visible="false" buttons="close" activepage="-1">
+        <a:page id="tmpProperties" caption="TMP-Properties" render="runtime" flex="1">
+
+            <!--<a:model id="mdlTmpProperties" />
+            <a:list id="lstTmpProperties"
+              autoselect = "false"
+              reselectable = "true"
+              anchors    = "0 0 0 0"
+              border     = "0"
+              model      = "mdlTmpProperties"
+              Canrename = "true"
+              >
+              <a:each match="[property]">
+                <a:caption match="[@key]" />
+            </a:each>
+
+            </a:list>-->
+        </a:page>
+    </a:tab>
+</a:application>
