@@ -50,15 +50,10 @@ var generate = exports.generate = function generate(options) {
 
     Fs.mkdir(directory, 0755, function (err) {
         if (err) {
-          if (err.code === 'EEXIST') {
-            // ok: directory already exists; that's what we want!
-          } else {
-            // Note: this is the old code for <node-0.6
-            // errno 17: folder already exists
-            if (err.errno !== 17) {
-              throw err;
-            }
-          };
+          // errno 17: folder already exists
+          if (err.errno !== 46) {
+            throw err;
+          }
         }
 
         templateRenderer.render({
@@ -151,8 +146,8 @@ var generate = exports.generate = function generate(options) {
    * @api private
    */
   dispatcher.generateI18n = function generateI18n() {
-    genericGenerate('resources/i18n', 'de_de.js', 'de_de');
-    genericGenerate('resources/i18n', 'en_us.js', 'en_us');
+    genericGenerate('resources/i18n', 'i18n_de_de.js', 'i18n_de_de');
+    genericGenerate('resources/i18n', 'i18n_en_us.js', 'i18n_en_us');
   };
 
   (function dispatchOperations() {

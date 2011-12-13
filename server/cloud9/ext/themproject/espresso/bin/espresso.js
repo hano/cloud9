@@ -6,15 +6,8 @@
  * @author pfleidi
  */
 
-var fs = require('fs');
-var path = require('path');
-
-var espresso_root = path.dirname(path.dirname(fs.realpathSync(__filename)));
-
-var COMMAND_FOLDER = path.join(espresso_root, 'core', 'commands');
-var commandparser = require(path.join(espresso_root, 'lib', 'commandparser'));
-
-var cmdParser = commandparser.create(COMMAND_FOLDER + '/', 'espresso');
+var COMMAND_FOLDER = __dirname + '/../core/commands/';
+var cmdParser = require('../lib/commandparser').create(COMMAND_FOLDER, 'espresso');
 var args;
 
 if (process.argv[0].slice(-4) == "node") {
@@ -24,3 +17,4 @@ if (process.argv[0].slice(-4) == "node") {
 }
 
 cmdParser.dispatch(args);
+

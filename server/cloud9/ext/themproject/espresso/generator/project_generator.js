@@ -67,16 +67,12 @@ var generate = exports.generate = function generate(options) {
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/jquery');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/jquery_mobile');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/jquery_mobile_plugins');
-  outPut.push(path + projectName + '/frameworks/The-M-Project/modules/jquery_mobile_plugins/mobiscroll');
+  outPut.push(path + projectName + '/frameworks/The-M-Project/modules/jquery_mobile_plugins/datepicker');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/themes');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/themes/jquery_mobile');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/themes/jquery_mobile/images');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/tmp_themes');
   outPut.push(path + projectName + '/frameworks/The-M-Project/modules/underscore');
-  if(require('path').existsSync(path + projectName + '/frameworks/The-M-Project/modules/d8')) {
-    outPut.push(path + projectName + '/frameworks/The-M-Project/modules/d8');
-  }
-
 
   /**
    * Helper to generate the folder structure for a new project.
@@ -99,9 +95,8 @@ var generate = exports.generate = function generate(options) {
 
       Fs.mkdir(dirPath, 0755, function (err) {
           if (err) {
-            // Note: for <node-0.6 the errno was 17!
             /* 17 = error code for: File exists!*/
-            if (err.code === 'EEXIST' || err.errno === 17) {
+            if (err.errno === 46) {
               console.log(Style.cyan('Project with name: ') + Style.magenta('"' + projectName + '"') + Style.cyan(' already exists!'));
               process.exit(1);
             } else {

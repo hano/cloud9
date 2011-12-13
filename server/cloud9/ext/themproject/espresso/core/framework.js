@@ -274,6 +274,7 @@ Framework.prototype.build = function (callback) {
   var that = this;
 
   console.log(this.style.green('calling build() for: "') + this.style.magenta(this.name) + this.style.green('"'));
+  console.log('Framework.prototype.build');
 
   if (that.isVirtual()) { // default = false.
     that.taskChain.run(that, callback);
@@ -386,7 +387,7 @@ Framework.prototype.save = function (callback) {
  * @param callback, the function, that is executed after the prepareForServer() is done.
  */
 Framework.prototype.prepareForServer = function (server, callback) {
-  var appName = this.app.name;
+  var appName = this.app.serverPath;
   this.files.forEach(function (file) {
       if (!server.files) {
         server.files = {};

@@ -50,7 +50,7 @@ var Resource = exports.Resource = function (properties) {
 /*
  * Getting all basic Espresso functions from Framework
  */
-require('sys').inherits(Resource, Framework);
+require('util').inherits(Resource, Framework);
 
 
 /**
@@ -321,6 +321,7 @@ Resource.prototype.build = function (callback) {
   var that = this;
 
   console.log(this.style.green('calling build() for: "') + this.style.magenta(this.name) + this.style.green('"'));
+  console.log('Resource.prototype.build');
 
   // console.log(this.files.length);
 

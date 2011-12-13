@@ -1,0 +1,12 @@
+#! /usr/bin/env node
+
+var jsdom = require("jsdom");
+
+var dom = jsdom.dom.level3.html;
+var browser = jsdom.windowAugmentation(dom);
+
+var document = browser.document;
+var window = browser.window;
+var self = browser.self;
+var navigator = browser.navigator;
+var location = browser.location;

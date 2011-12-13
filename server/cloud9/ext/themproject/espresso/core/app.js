@@ -41,60 +41,61 @@ var HTML = Utils.HTML;
 // TODO: Refactoring
 
 var App = exports.App = function (options, server) {
-  var applicationDirectory;
+    var applicationDirectory;
 
-  /* Properties */
+    /* Properties */
 
-  /* Build configuration */
-  this.displayName = '';
-  this.targetQuery = '';
-  this.libraries = [];
+    /* Build configuration */
+    this.displayName = '';
+    this.targetQuery = '';
+    this.libraries = [];
 
-  this.server            = server || {};
-  this.buildVersion      = Date.now();  // timestamp of the build.
+    this.server = server || {};
+    this.buildVersion = Date.now();  // timestamp of the build.
 
-  this.clear             = '';
-  this.applicationDirectory          = '';  //  the a actually folder name, in which the application is located.
-  this.name              = 'defaultName';
-  this.theme             = 'default';
-  this.outputFolder      = 'build'; // name of the output folder, default is 'build'.
-  this.environment       = 'Web';
+    this.clear = '';
+    this.applicationDirectory = '';  //  the a actually folder name, in which the application is located.
+    this.name = 'defaultName';
+    this.serverPath = 'defaultPath';
+    this.theme = 'default';
+    this.outputFolder = 'build'; // name of the output folder, default is 'build'.
+    this.environment = 'Web';
 
-  /* Build switches */
-  this.jslintCheck         = false;
-  this.eliminate           = false;
-  this.reachable           = null;
-  this.minify              = false;  // uses minfiy task ?! default is false
-  this.offlineManifest     = true;   // build with offline manifest ?! default is true
-  this.mode                = "debug";
-  this.debugLevel          = 1;
+    /* Build switches */
+    this.jslintCheck = false;
+    this.eliminate = false;
+    this.reachable = null;
+    this.minify = false;  // uses minfiy task ?! default is false
+    this.offlineManifest = true;   // build with offline manifest ?! default is true
+    this.mode = "debug";
+    this.debugLevel = 1;
 
-  this.taskChain           = [];
-  this.proxies             = [];
-  this.supportedLanguages  = [];
-  this.excludedFolders     = [];
-  this.excludedFiles       = [];
-  this.excludedFromCaching = [];
-  this.frameworks          = [];
-  this.globalState         = {};
+    this.taskChain = [];
+    this.proxies = [];
+    this.supportedLanguages = [];
+    this.excludedFolders = [];
+    this.excludedFiles = [];
+    this.excludedFromCaching = [];
+    this.frameworks = [];
+    this.globalState = {};
 
-  this.HEAD_IndexHtml = [];
-  this.BODY_IndexHtml = [];
+    this.HEAD_IndexHtml = [];
+    this.BODY_IndexHtml = [];
 
-  this.target = {};
-  this.librariesNamesForIndexHtml = [];
-  this.coreFrameworks = {};
+    this.target = {};
+    this.librariesNamesForIndexHtml = [];
+    this.coreFrameworks = {};
 
-  this.manifest  = {
-    "cache" : [],
-    "network" : [],
-    "fallback" : []
-  };
+    this.manifest = {
+        "cache" : [],
+        "network" : [],
+        "fallback" : []
+    };
 
-  this.reporter = new Report();
-  this.applicationDirectory = options.directory;
+    this.reporter = new Report();
+    this.applicationDirectory = options.directory;
 
-  this.loadJSONConfig();
+    this.loadJSONConfig();
 };
 
 /*
@@ -108,10 +109,10 @@ App.prototype = new E();
  * @param build_options the options to customize the build process
  */
 App.prototype.addOptions = function (build_options) {
-  var that = this;
-  Object.keys(build_options).forEach(function (key) {
-    that[key] = build_options[key];
-  });
+    var that = this;
+    Object.keys(build_options).forEach(function (key) {
+        that[key] = build_options[key];
+    });
 };
 
 /**
@@ -120,13 +121,14 @@ App.prototype.addOptions = function (build_options) {
  * The 'config.json', should be in the root folder of the project to build.
  */
 App.prototype.loadJSONConfig = function () {
-  var config = Utils.readConfig(this.applicationDirectory);
-  this.addOptions(config);
+    var config = Utils.readConfig(this.applicationDirectory);
+    this.addOptions(config);
 
-  if (config.cacheFallbacks) {
-    // adding specific fallbacks for cache.manifest
-    this.manifest.fallback = config.cacheFallbacks;
-  };
+    if (config.cacheFallbacks) {
+        // adding specific fallbacks for cache.manifest
+        this.manifest.fallback = config.cacheFallbacks;
+    }
+    ;
 };
 
 /**
@@ -134,12 +136,13 @@ App.prototype.loadJSONConfig = function () {
  * Adding a Framework to the current build.
  */
 App.prototype.addFrameworks = function (frameworks) {
-  var that = this;
-  if (frameworks instanceof Array) {
-    frameworks.forEach(function (framework) {
-      that.frameworks.push(framework);
-    });
-  };
+    var that = this;
+    if (frameworks instanceof Array) {
+        frameworks.forEach(function (framework) {
+            that.frameworks.push(framework);
+        });
+    }
+    ;
 };
 
 /**
@@ -148,78 +151,80 @@ App.prototype.addFrameworks = function (frameworks) {
  * The project is equals the application.
  */
 App.prototype.loadTheApplication = function () {
-  var that = this,
-      _theApplication = [],
-      _theApplicationResources,
-      _i18n;
+    var that = this,
+        _theApplication = [],
+        _theApplicationResources,
+        _i18n;
 
-  _theApplication = ['app'].map(function (module) {
-    var _frameworkOptions  = {};
-    _frameworkOptions.path = that.applicationDirectory + '/' + module;
-    _frameworkOptions.name = that.name + '_App';
-    _frameworkOptions.frDelimiter = that.applicationDirectory + '/';
-    _frameworkOptions.excludedFolders = ['resources'].concat(that.excludedFolders);
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.app = that;
-    if (!that.eliminate) {
-      _frameworkOptions.taskChain = new TaskManager([
-        "preSort",
-        "dependency",
-        "merge",
-        "minify",
-        "contentType",
-        "manifest"
-      ]).getTaskChain();
-    } else {
-      _frameworkOptions.taskChain = new TaskManager([
-        "preSort",
-        "dependency",
-        "analyze",
-        "globalAnalyze",
-        "eliminate",
-        "merge",
-        "minify",
-        "contentType",
-        "manifest"
-      ]).getTaskChain();
-    };
-    return new Framework(_frameworkOptions);
-  });
-  this.addFrameworks(_theApplication);
-
-  _theApplicationResources = ['app/resources'].map(function (module) {
-    var _frameworkOptions  = {};
-    _frameworkOptions.path = that.applicationDirectory + '/' + module;
-    _frameworkOptions.name = that.name + '_AppResources';
-    _frameworkOptions.frDelimiter = that.applicationDirectory+'/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.app = that;
-    _frameworkOptions.taskChain = new TaskManager([
-      "contentType",
-      "manifest"
-    ]).getTaskChain();
-    return new Resource(_frameworkOptions);
-  });
-  this.addFrameworks(_theApplicationResources);
-
-  if (this.supportedLanguages.length >= 1) {
-    _i18n = ['app/resources/i18n'].map(function (module) {
-      var _frameworkOptions  = {};
-      _frameworkOptions.path = that.applicationDirectory + '/' + module;
-      _frameworkOptions.name = 'i18n';
-      _frameworkOptions.frDelimiter = that.applicationDirectory+'/';
-      _frameworkOptions.excludedFolders = that.excludedFolders;
-      _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-      _frameworkOptions.app = that;
-      _frameworkOptions.taskChain = new TaskManager([
-        "contentType",
-        "manifest"
-      ]).getTaskChain();
-      return new Framework(_frameworkOptions);
+    _theApplication = ['app'].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = that.applicationDirectory + '/' + module;
+        _frameworkOptions.name = that.name + '_App';
+        _frameworkOptions.frDelimiter = that.applicationDirectory + '/';
+        _frameworkOptions.excludedFolders = ['resources'].concat(that.excludedFolders);
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.app = that;
+        if (!that.eliminate) {
+            _frameworkOptions.taskChain = new TaskManager([
+                "preSort",
+                "dependency",
+                "merge",
+                "minify",
+                "contentType",
+                "manifest"
+            ]).getTaskChain();
+        } else {
+            _frameworkOptions.taskChain = new TaskManager([
+                "preSort",
+                "dependency",
+                "analyze",
+                "globalAnalyze",
+                "eliminate",
+                "merge",
+                "minify",
+                "contentType",
+                "manifest"
+            ]).getTaskChain();
+        }
+        ;
+        return new Framework(_frameworkOptions);
     });
-    this.addFrameworks(_i18n);
-  };
+    this.addFrameworks(_theApplication);
+
+    _theApplicationResources = ['app/resources'].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = that.applicationDirectory + '/' + module;
+        _frameworkOptions.name = that.name + '_AppResources';
+        _frameworkOptions.frDelimiter = that.applicationDirectory + '/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.app = that;
+        _frameworkOptions.taskChain = new TaskManager([
+            "contentType",
+            "manifest"
+        ]).getTaskChain();
+        return new Resource(_frameworkOptions);
+    });
+    this.addFrameworks(_theApplicationResources);
+
+    if (this.supportedLanguages.length >= 1) {
+        _i18n = ['app/resources/i18n'].map(function (module) {
+            var _frameworkOptions = {};
+            _frameworkOptions.path = that.applicationDirectory + '/' + module;
+            _frameworkOptions.name = 'i18n';
+            _frameworkOptions.frDelimiter = that.applicationDirectory + '/';
+            _frameworkOptions.excludedFolders = that.excludedFolders;
+            _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+            _frameworkOptions.app = that;
+            _frameworkOptions.taskChain = new TaskManager([
+                "contentType",
+                "manifest"
+            ]).getTaskChain();
+            return new Framework(_frameworkOptions);
+        });
+        this.addFrameworks(_i18n);
+    }
+    ;
 };
 
 /**
@@ -228,133 +233,130 @@ App.prototype.loadTheApplication = function () {
  * Loads the files for the core system.
  */
 App.prototype.loadTheMProject = function () {
-  var that = this,
-      _theMProject,
-      _theMProjectResources,
-      _jQueryPlugins,
-      _jquery,
-      _path_to_the_m_project =
-          this.touchPath(that.applicationDirectory + '/frameworks/The-M-Project')
-          ? that.applicationDirectory + '/frameworks/The-M-Project'
-          : that.applicationDirectory + '/frameworks/Mproject'
-          ;
-  /*
-   * Getting all The-M-Project core files
-   * and generate Framework objects.
-   */
-  _theMProject = ['core','ui'].map(function (module) {
-    var _frameworkOptions  = {};
-    _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
-    _frameworkOptions.name = module;
-    _frameworkOptions.app = that;
-    _frameworkOptions.frDelimiter = 'modules/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    /* Definition of standard build chain for The-M-Project's core files */
-    if (!that.eliminate) {
-      _frameworkOptions.taskChain = new TaskManager([
-        "dependency",
-        "merge",
-        "minify",
-        "contentType",
-        "manifest"
-      ]).getTaskChain();
-    } else {
-      _frameworkOptions.taskChain = new TaskManager([
-        "dependency",
-        "analyze",
-        "eliminate",
-        "merge",
-        "minify",
-        "contentType",
-        "manifest"
-      ]).getTaskChain();
-    };
-    return new Framework(_frameworkOptions);
-  });
-  this.addFrameworks(_theMProject);
+    var that = this,
+        _theMProject,
+        _theMProjectResources,
+        _jQueryPlugins,
+        _jquery,
+        _path_to_the_m_project =
+            this.touchPath(that.applicationDirectory + '/frameworks/The-M-Project')
+                ? that.applicationDirectory + '/frameworks/The-M-Project'
+                : that.applicationDirectory + '/frameworks/Mproject'
+        ;
+    /*
+     * Getting all The-M-Project core files
+     * and generate Framework objects.
+     */
+    _theMProject = ['core','ui'].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
+        _frameworkOptions.name = module;
+        _frameworkOptions.app = that;
+        _frameworkOptions.frDelimiter = 'modules/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        /* Definition of standard build chain for The-M-Project's core files */
+        if (!that.eliminate) {
+            _frameworkOptions.taskChain = new TaskManager([
+                "dependency",
+                "merge",
+                "minify",
+                "contentType",
+                "manifest"
+            ]).getTaskChain();
+        } else {
+            _frameworkOptions.taskChain = new TaskManager([
+                "dependency",
+                "analyze",
+                "eliminate",
+                "merge",
+                "minify",
+                "contentType",
+                "manifest"
+            ]).getTaskChain();
+        }
+        ;
+        return new Framework(_frameworkOptions);
+    });
+    this.addFrameworks(_theMProject);
 
-  /*
-   * Getting the The-M-Project resources and third party frameworks,
-   * like: jquery.js or underscore.js
-   *
-   * use filter() to make sure the files exists
-   */
-  _theMProjectResources = [
-    'jquery',
-    'underscore',
-    'd8',
-    'themes',
-    'tmp_themes',
-    'bootstrapping'
-  ].filter(function (module){
-    return require('path').existsSync(_path_to_the_m_project + '/modules/' + module);
-  }).map(function (module) {
-    var _frameworkOptions  = {};
-    _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
-    _frameworkOptions.name = module;
-    _frameworkOptions.app = that;
-    _frameworkOptions.frDelimiter = 'modules/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.taskChain = new TaskManager([
-      "contentType",
-      "markCoreFramework",
-      "manifest"
-    ]).getTaskChain();
-    return new Framework(_frameworkOptions);
-  });
-  this.addFrameworks(_theMProjectResources);
+    /*
+     * Getting the The-M-Project resources and third party frameworks,
+     * like: jquery.js or underscore.js
+     */
+    _theMProjectResources = [
+        'jquery',
+        'underscore',
+        'themes',
+        'tmp_themes',
+        'bootstrapping'
+    ].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
+        _frameworkOptions.name = module;
+        _frameworkOptions.app = that;
+        _frameworkOptions.frDelimiter = 'modules/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.taskChain = new TaskManager([
+            "contentType",
+            "markCoreFramework",
+            "manifest"
+        ]).getTaskChain();
+        return new Framework(_frameworkOptions);
+    });
+    this.addFrameworks(_theMProjectResources);
 
-  /*
-   * Load some jQuery Mobile plugins.
-   * NOTE: Implemented this only for testing of datepicker and splitview.
-   *       As long as there is not clear definition of how to refer plugins
-   *       automatically, this stays here.
-   */
-  _jQueryPlugins = [
-    'jquery_mobile_plugins'
-  ].map(function (module) {
-    var _frameworkOptions = {};
-    _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
-    _frameworkOptions.name = module;
-    _frameworkOptions.app = that;
-    _frameworkOptions.is_a_plugin = true;
-    _frameworkOptions.frDelimiter = 'modules/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.taskChain = new TaskManager([
-      "merge",
-      "markCoreFramework",
-      "contentType",
-      "manifest"
-    ]).getTaskChain();
-    return new Framework(_frameworkOptions);
-  });
+    /*
+     * Load some jQuery Mobile plugins.
+     * NOTE: Implemented this only for testing of datepicker and splitview.
+     *       As long as there is not clear definition of how to refer plugins
+     *       automatically, this stays here.
+     */
+    _jQueryPlugins = [
+        'jquery_mobile_plugins'
+    ].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
+        _frameworkOptions.name = module;
+        _frameworkOptions.app = that;
+        _frameworkOptions.is_a_plugin = true;
+        _frameworkOptions.frDelimiter = 'modules/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.taskChain = new TaskManager([
+            "merge",
+            "markCoreFramework",
+            "contentType",
+            "manifest"
+        ]).getTaskChain();
+        return new Framework(_frameworkOptions);
+    });
 
-  if (this.touchPath(that.applicationDirectory + '/frameworks/The-M-Project/modules/jquery_mobile_plugins')) {
-    this.addFrameworks(_jQueryPlugins);
-  };
+    if (this.touchPath(that.applicationDirectory + '/frameworks/The-M-Project/modules/jquery_mobile_plugins')) {
+        this.addFrameworks(_jQueryPlugins);
+    }
+    ;
 
-  _jquery = [
-    'jquery_mobile'
-  ].map(function (module) {
-    var _frameworkOptions = {};
-    _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
-    _frameworkOptions.name = module;
-    _frameworkOptions.app = that;
-    _frameworkOptions.frDelimiter = 'modules/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.taskChain = new TaskManager([
-      "merge",
-      "contentType",
-      "markCoreFramework",
-      "manifest"
-    ]).getTaskChain();
-    return new Framework(_frameworkOptions);
-  });
-  this.addFrameworks(_jquery);
+    _jquery = [
+        'jquery_mobile'
+    ].map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path = _path_to_the_m_project + '/modules/' + module;
+        _frameworkOptions.name = module;
+        _frameworkOptions.app = that;
+        _frameworkOptions.frDelimiter = 'modules/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.taskChain = new TaskManager([
+            "merge",
+            "contentType",
+            "markCoreFramework",
+            "manifest"
+        ]).getTaskChain();
+        return new Framework(_frameworkOptions);
+    });
+    this.addFrameworks(_jquery);
 };
 
 /**
@@ -362,197 +364,238 @@ App.prototype.loadTheMProject = function () {
  * Builds the index.html page. Used for loading the application.
  */
 App.prototype.buildIndexHTML = function (callback, _frameworkNamesForIndexHtml, _HEAD_IndexHtml) {
-  var that = this,
-      _displayName = this.displayName ? this.displayName : this.name,
-      _indexHtml = [];
 
-  if (_HEAD_IndexHtml.length === 0) {
-    var fallback_header_information = {
-      meta: [
-        { name: 'apple-mobile-web-app-capable', content: 'yes' },
-        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
-      ],
-      link: [
-        { rel: 'apple-touch-icon', href: '/theme/images/apple-touch-icon.png' }
-      ]
-    };
-    Object.keys(fallback_header_information).forEach(function (tagName) {
-      fallback_header_information[tagName].forEach(function (attrs) {
-        _HEAD_IndexHtml.push(tagName, attrs);
-      });
-    });
-  };
+    var that = this,
+        _displayName = this.displayName ? this.displayName : this.name,
+        _indexHtml = [];
 
-  _indexHtml.push(HTML('!DOCTYPE', {html:true}));
-  _indexHtml.push(
-    '<!-- This file was generated by Espresso version '
-    + this.__version__
-    + ' -->'
-  );
-
-  _indexHtml.push(HTML('html', {
-    manifest: this.offlineManifest && 'cache.manifest'
-  }));
-
-  _indexHtml.push(HTML('head'));
-
-  _HEAD_IndexHtml.forEach(function (head) {
-    _indexHtml.push(head);
-  });
-
-  _indexHtml.push(HTML('meta', {
-    name: 'viewport',
-    content: [ 'initial-scale=1.0'
-             , 'minimum-scale=1.0'
-             , 'maximum-scale=1.0'
-             , 'user-scalable=no'
-             , 'width=device-width'
-             ].join(',')
-  }));
-  _indexHtml.push(HTML('title', {}, _displayName));
-
-  // Add frameworks in correct order.
-  [ 'jquery'
-  , 'bootstrapping'
-  , 'jquery_mobile'
-  , 'jquery_mobile_plugins'
-  , 'jquery_mobile_plugins-theme'
-  , 'underscore'
-  , 'd8'
-  , 'themes'
-  , 'tmp_themes'
-  ].forEach(function (name) {
-    if (name in that.coreFrameworks) {
-      that.coreFrameworks[name].files.forEach(function (file) {
-        switch (true) {
-          case (file.isJavaScript()):
-            return _indexHtml.push(HTML('script', {
-              type: 'application/javascript',
-              src: file.getBaseName() + file.getFileExtension()
-            }, ''));
-          case (file.isStylesheet()):
-            return _indexHtml.push(HTML('link', {
-              type: 'text/css',
-              href: 'theme/' + file.getBaseName() + file.getFileExtension(),
-              rel: 'stylesheet'
-            }));
+    if (_HEAD_IndexHtml.length === 0) {
+        var fallback_header_information = {
+            meta: [
+                { name: 'apple-mobile-web-app-capable', content: 'yes' },
+                { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
+            ],
+            link: [
+                { rel: 'apple-touch-icon', href: '/theme/images/apple-touch-icon.png' }
+            ]
         };
-      });
+        Object.keys(fallback_header_information).forEach(function (tagName) {
+            fallback_header_information[tagName].forEach(function (attrs) {
+                _HEAD_IndexHtml.push(tagName, attrs);
+            });
+        });
     };
-  });
-    
-  ['theme/style.css'].forEach(function (path) {
-    _indexHtml.push(HTML('link', {
-      type: 'text/css',
-      href: path,
-      rel: 'stylesheet'
+
+    _indexHtml.push(HTML('!DOCTYPE', {html:true}));
+
+    _indexHtml.push(HTML('html', {
+        manifest: this.offlineManifest && 'cache.manifest'
     }));
-  });
 
-  ['core.js', 'ui.js'].forEach(function (path) {
-    _indexHtml.push(HTML('script', {
-      type: 'application/javascript',
-      src: path
-    }, ''));
-  });
+    _indexHtml.push(HTML('head'));
 
-  _frameworkNamesForIndexHtml.forEach(function (name) {
-    var match = /^(.*\/)?([^\/]+(\.[^.\/]+))$/.exec(name);
-    if (match) {
-      var basename = match[2];
-      var extension = match[3];
-      switch (extension) {
-        case '.js':
-          return _indexHtml.push(HTML('script', {
-            type: 'application/javascript',
-            src: basename
-          }, ''));
-        case '.css':
-          return _indexHtml.push(HTML('link', {
-            type: 'text/css',
-            href: 'theme/' + basename,
-            rel: 'stylesheet'
-          }));
-      };
-    };
-  });
-
-  if (this.supportedLanguages.length > 0) {
-    this.supportedLanguages.forEach(function (lang) {
-      _indexHtml.push(HTML('script', {
-        type: 'application/javascript',
-        src: lang + '.js'
-      }, ''));
+    _HEAD_IndexHtml.forEach(function (head) {
+        _indexHtml.push(head);
     });
-  };
 
-  var PhoneGap = this.environment === 'PhoneGap';
-  if (PhoneGap) {
+    _indexHtml.push(HTML('meta', {
+        name: 'viewport',
+        content: [ 'initial-scale=1.0'
+            , 'minimum-scale=1.0'
+            , 'maximum-scale=1.0'
+            , 'user-scalable=no'
+            , 'width=device-width'
+        ].join(',')
+    }));
+    _indexHtml.push(HTML('title', {}, _displayName));
+
+    // Add frameworks in correct order.
+    [ 'jquery'
+        , 'bootstrapping'
+        , 'jquery_mobile'
+        , 'jquery_mobile_plugins'
+        , 'jquery_mobile_plugins-theme'
+        , 'underscore'
+        , 'themes'
+        , 'tmp_themes'
+    ].forEach(function (name) {
+        if (name in that.coreFrameworks) {
+            that.coreFrameworks[name].files.forEach(function (file) {
+                switch (true) {
+                    case (file.isJavaScript()):
+                        return _indexHtml.push(HTML('script', {
+                            type: 'application/javascript',
+                            src: file.getBaseName() + file.getFileExtension()
+                        }, ''));
+                    case (file.isStylesheet()):
+                        return _indexHtml.push(HTML('link', {
+                            type: 'text/css',
+                            href: 'theme/' + file.getBaseName() + file.getFileExtension(),
+                            rel: 'stylesheet'
+                        }));
+                }
+                ;
+            });
+        }
+        ;
+    });
+
+    ['theme/style.css'].forEach(function (path) {
+        _indexHtml.push(HTML('link', {
+            type: 'text/css',
+            href: path,
+            rel: 'stylesheet'
+        }));
+    });
+
+    ['core.js', 'ui.js'].forEach(function (path) {
+        _indexHtml.push(HTML('script', {
+            type: 'application/javascript',
+            src: path
+        }, ''));
+    });
+
+    _frameworkNamesForIndexHtml.forEach(function (name) {
+        var match = /^(.*\/)?([^\/]+(\.[^.\/]+))$/.exec(name);
+        if (match) {
+            var basename = match[2];
+            var extension = match[3];
+            switch (extension) {
+                case '.js':
+                    return _indexHtml.push(HTML('script', {
+                        type: 'application/javascript',
+                        src: basename
+                    }, ''));
+                case '.css':
+                    return _indexHtml.push(HTML('link', {
+                        type: 'text/css',
+                        href: 'theme/' + basename,
+                        rel: 'stylesheet'
+                    }));
+            }
+            ;
+        }
+        ;
+    });
+
+    if (this.supportedLanguages.length > 0) {
+        this.supportedLanguages.forEach(function (lang) {
+            _indexHtml.push(HTML('script', {
+                type: 'application/javascript',
+                src: lang + '.js'
+            }, ''));
+        });
+    }
+    ;
+
+    var PhoneGap = this.environment === 'PhoneGap';
+    if (PhoneGap) {
+        _indexHtml.push(HTML('script', {
+            type: 'application/javascript',
+            src: 'phonegap.js'
+        }, ''));
+    }
+    ;
     _indexHtml.push(HTML('script', {
-      type: 'application/javascript',
-      src: 'phonegap.js'
+        type: 'application/javascript'
+    }, 'var PhoneGap = ' + PhoneGap + ';'));
+
+    _indexHtml.push(HTML('script', {
+            type: 'application/javascript'
+        }, 'var ' + this.name + ' = ' + this.name + ' || {};'
+        + 'M.Application.name = ' + JSON.stringify(this.name) + ';'
+        + (typeof this.application !== 'undefined'
+        ? 'M.Application.config = ' + JSON.stringify(this.application) + ';'
+        : '')
+    ));
+
+    _indexHtml.push(HTML('script', {
+        type: 'application/javascript',
+        src: this.name + '_App.js'
     }, ''));
-  };
-  _indexHtml.push(HTML('script', {
-    type: 'application/javascript'
-  }, 'var isPhoneGap = ' + PhoneGap + ';'));
 
-  _indexHtml.push(HTML('script', {
-    type: 'application/javascript'
-  }, 'var ' + this.name + ' = ' + this.name + ' || {};'
-  +  'M.Application.name = ' + JSON.stringify(this.name) + ';'
-  +  (typeof this.defaultLanguage !== 'undefined'
-      ? 'M.Application.defaultLanguage = ' + JSON.stringify(this.defaultLanguage) + ';'
-      : '')
-  +  (typeof this.application !== 'undefined'
-      ? 'M.Application.config = ' + JSON.stringify(this.application) + ';'
-      : '')
-  ));
+    //marco
+    var CarbonCopy = require('./../carboncopy/CarbonCopy').CarbonCopy;
+    console.log(that.appName, that.hostname, that.port);
+    var cc = new CarbonCopy(this.name);
 
-  _indexHtml.push(HTML('script', {
-    type: 'application/javascript',
-    src: this.name + '_App.js'
-  }, ''));
-    
-  _indexHtml.push(HTML('/head'));
-  _indexHtml.push(HTML('body'));
 
-  _indexHtml.push(HTML('script', {
-    type: 'application/javascript'
-  }, this.name + '.app.main();'));
+    //TODO make proxy editable url: "/CarbonCopy"
+    var script = 'var builder_ast_string = "";'
+        + 'var builder_ast_object = "";'
+        + '$(document).ready(function(){'
+        +   '$.ajax({'
+        +       'type: "POST",'
+        +       ' url: "/CarbonCopy",'
+        +       ' data: "getAbstractSyntaxTree",'
+        +       'success: function(msg) {'
+        +           'builder_ast_string = msg;'
+        +           'builder_ast_object = JSON.parse(msg);'
+        +           '/*console.log("Data received ", msg);*/'
+        +       '},'
+        +       'error: function(msg) {'
+        +           'console.log("error on AST sync", msg);'
+        +       '}'
+        +   '});'
+        +   '$.ajax({'
+        +       'type: "POST",'
+        +       ' url: "/CarbonCopy",'
+        +       ' data: "getASTLibrary",'
+        +       'success: function(msg) {'
+        +           'builder_ast_lib = JSON.parse(msg);'
+        +       '},'
+        +       'error: function(msg) {'
+        +           'console.log("error on AST sync", msg);'
+        +       '}'
+        +   '});'
+        + '});';
 
-  _indexHtml.push(HTML('/body'));
-  _indexHtml.push(HTML('/html'));
+    _indexHtml.push(HTML('script', {
+        type: 'application/javascript'
+    }, script));
 
-  _indexHtml = _indexHtml.join('\n');
+    //marco_end
 
-  var _frameworkOptions  = {};
-  _frameworkOptions.path = this.applicationDirectory;
-  _frameworkOptions.name = 'IndexHtml';
-  _frameworkOptions.app = this;
-  _frameworkOptions.virtual = true;
-  _frameworkOptions.frDelimiter = '/';
-  // Definition of standard build chain for The-M-Project's core files
-  _frameworkOptions.taskChain = new TaskManager([
-    "contentType",
-    "manifest"
-  ]).getTaskChain();
-  var fr = new Framework(_frameworkOptions);
+    _indexHtml.push(HTML('script', {
+        type: 'application/javascript'
+    }, this.name + '.app.main();'));
 
-  fr.files.push(new File({
-    frDelimiter: fr.frDelimiter,
-    virtual: true,
-    name:'/index.html',
-    path:'/index.html',
-    requestPath :'index.html',
-    contentType : 'text/html',
-    framework: fr, /* the framework, this file belongs to. */
-    content: _indexHtml
-  }));
-  var ar = [];
-  ar.push(fr);
-  this.addFrameworks(ar);
-  callback(null,this.frameworks);
+    _indexHtml.push(HTML('body'));
+
+
+
+    _indexHtml.push(HTML('/body'));
+    _indexHtml.push(HTML('/html'));
+
+    _indexHtml = _indexHtml.join('\n');
+
+    var _frameworkOptions = {};
+    _frameworkOptions.path = this.applicationDirectory;
+    _frameworkOptions.name = 'IndexHtml';
+    _frameworkOptions.app = this;
+    _frameworkOptions.virtual = true;
+    _frameworkOptions.frDelimiter = '/';
+    // Definition of standard build chain for The-M-Project's core files
+    _frameworkOptions.taskChain = new TaskManager([
+        "contentType",
+        "manifest"
+    ]).getTaskChain();
+    var fr = new Framework(_frameworkOptions);
+
+    fr.files.push(new File({
+        frDelimiter: fr.frDelimiter,
+        virtual: true,
+        name:'/index.html',
+        path:'/index.html',
+        requestPath :'index.html',
+        contentType : 'text/html',
+        framework: fr, /* the framework, this file belongs to. */
+        content: _indexHtml
+    }));
+    var ar = [];
+    ar.push(fr);
+    this.addFrameworks(ar);
+    callback(null, this.frameworks);
 };
 
 /**
@@ -561,83 +604,79 @@ App.prototype.buildIndexHTML = function (callback, _frameworkNamesForIndexHtml, 
  * @param callback
  */
 App.prototype.buildManifest = function (callback) {
-  var self = this, _cacheManifest = [];
+    var self = this, _cacheManifest = [];
 
-  if (!self.offlineManifest) {
-    callback();
-  } else {
-    /* adding entries for the Explicit CACHE section*/
-    _cacheManifest.push(
-      'CACHE MANIFEST',
-      '#Application:' + this.name
-      + ', Version:'
-      +  (typeof this.application !== 'undefined' && this.application !== null && typeof this.application.version !== 'undefined'
-          ? this.application.version
-          : (typeof this.version !== 'undefined'
-             ? this.version
-             : '-'))
-      + ', Timestamp:' + this.buildVersion, //adding 'header' information.
-      '\n',
-      '# Explicitly cached entries',
-      'CACHE:'
-    );
-    this.manifest.cache.forEach(function (expliFile) {
-      _cacheManifest.push(expliFile);
-    });
+    if (!self.offlineManifest) {
+        callback();
+    } else {
+        /* adding entries for the Explicit CACHE section*/
+        _cacheManifest.push(
+            'CACHE MANIFEST',
+            '#Application:' + this.name
+                + ', Version:' + this.version
+                + ', Timestamp:' + this.buildVersion, //adding 'header' information.
+            '\n',
+            '# Explicitly cached entries',
+            'CACHE:'
+        );
+        this.manifest.cache.forEach(function (expliFile) {
+            _cacheManifest.push(expliFile);
+        });
 
-    /* adding entries for the NETWORK section*/
-    _cacheManifest.push(
-      '\n',
-      '# Resources that require the device/user to be online.',
-      'NETWORK:'
-    );
-    this.manifest.network.forEach(function (networkFile) {
-      // Files, exclude from explicitly section by user.
-      _cacheManifest.push(networkFile);
-    });
+        /* adding entries for the NETWORK section*/
+        _cacheManifest.push(
+            '\n',
+            '# Resources that require the device/user to be online.',
+            'NETWORK:'
+        );
+        this.manifest.network.forEach(function (networkFile) {
+            // Files, exclude from explicitly section by user.
+            _cacheManifest.push(networkFile);
+        });
 
-    this.proxies.forEach(function (proxy) {
-      // Proxy entries.
-      _cacheManifest.push(proxy.proxyAlias);
-    });
+        this.proxies.forEach(function (proxy) {
+            // Proxy entries.
+            _cacheManifest.push(proxy.proxyAlias);
+        });
 
-    // enable wildcard.
-    _cacheManifest.push('*');
+        // enable wildcard.
+        _cacheManifest.push('*');
 
-    /* adding entries for the FALLBACK section */
-    _cacheManifest.push(
-      '\n# Fallback resources ',
-      'FALLBACK:'
-    );
-    this.manifest.fallback.forEach(function (fallbackFile) {
-      _cacheManifest.push(fallbackFile);
-    });
+        /* adding entries for the FALLBACK section */
+        _cacheManifest.push(
+            '\n# Fallback resources ',
+            'FALLBACK:'
+        );
+        this.manifest.fallback.forEach(function (fallbackFile) {
+            _cacheManifest.push(fallbackFile);
+        });
 
-    var _frameworkOptions  = {};
-    _frameworkOptions.path = this.applicationDirectory;
-    _frameworkOptions.name = 'chacheManifest';
-    _frameworkOptions.app = this;
-    _frameworkOptions.virtual = true;
-    _frameworkOptions.frDelimiter = '/';
-    _frameworkOptions.taskChain = new TaskManager([
-      "void"
-    ]).getTaskChain();
-    var fr = new Framework(_frameworkOptions);
-    fr.files.push(new File({
-      frDelimiter: fr.frDelimiter,
-      virtual: true,
-      name:'/cache.manifest',
-      path:'/cache.manifest',
-      contentType : 'text/cache-manifest',
-      requestPath :'cache.manifest',
-      framework: fr, /* the framework, this file belongs to.*/
-      content: _cacheManifest.join('\n')
-    }));
-    var ar = [];
-    ar.push(fr);
-    this.addFrameworks(ar);
-    callback(null,this.frameworks);
-  };
+        var _frameworkOptions = {};
+        _frameworkOptions.path = this.applicationDirectory;
+        _frameworkOptions.name = 'chacheManifest';
+        _frameworkOptions.app = this;
+        _frameworkOptions.virtual = true;
+        _frameworkOptions.frDelimiter = '/';
+        _frameworkOptions.taskChain = new TaskManager([
+            "void"
+        ]).getTaskChain();
+        var fr = new Framework(_frameworkOptions);
+        fr.files.push(new File({
+            frDelimiter: fr.frDelimiter,
+            virtual: true,
+            name:'/cache.manifest',
+            path:'/cache.manifest',
+            contentType : 'text/cache-manifest',
+            requestPath :'cache.manifest',
+            framework: fr, /* the framework, this file belongs to.*/
+            content: _cacheManifest.join('\n')
+        }));
+        var ar = [];
+        ar.push(fr);
+        this.addFrameworks(ar);
+        callback(null, this.frameworks);
+    }
+    ;
 };
 
 /**
@@ -646,116 +685,121 @@ App.prototype.buildManifest = function (callback) {
  * @param {function}, the function that should be called after the output folders are made.
  */
 App.prototype.makeOutputFolder = function (callback) {
-  var self = this;
-  var _outputPath = this.applicationDirectory+'/'+this.outputFolder;
-  self._outP = [];
-  self._outP.push(_outputPath);
-  self._outP.push('/'+this.buildVersion);
-  self._outP.push('/theme');
-  self._outP.push('/images');
+    var self = this;
+    var _outputPath = this.applicationDirectory + '/' + this.outputFolder;
+    self._outP = [];
+    self._outP.push(_outputPath);
+    self._outP.push('/' + this.buildVersion);
+    self._outP.push('/theme');
+    self._outP.push('/images');
 
-  var _OutputDirMaker = function (callback) {
-    var that = this;
-    //console.log('output dir maker called');
-    that._folderCounter = 4; /*make 4 folders*/
+    var _OutputDirMaker = function (callback) {
+        var that = this;
+        //console.log('output dir maker called');
+        that._folderCounter = 4;
+        /*make 4 folders*/
 
-    that.callbackIfDone = function () {
-      if (that._folderCounter === 0) {
-        callback();
-      };
+        that.callbackIfDone = function () {
+            if (that._folderCounter === 0) {
+                callback();
+            }
+            ;
+        };
+
+        that.makeOutputDir = function (path) {
+            if (that._folderCounter >= 1) {
+                self._e_.fs.mkdir(path, 0777, function (err) {
+                    if (err && err.errno !== 46) {
+                        throw err;
+                    }
+                    that._folderCounter--;
+                    that.makeOutputDir(path + self._outP.shift());
+                });
+            }
+            ;
+            that.callbackIfDone();
+        };
     };
-
-    that.makeOutputDir = function (path) {
-      if (that._folderCounter >=1) {
-        self._e_.fs.mkdir(path, 0777 ,function (err) {
-          if (err) {
-            if (err.code === 'EEXIST') {
-              // ok: directory already exists; that's what we want!
-            } else {
-              // this is the "old-and-underdocumented" behavior
-              if (err && err.errno !== 17) {throw err;}
-            };
-          };
-          that._folderCounter--;
-          that.makeOutputDir(path+ self._outP.shift());
-        });
-      };
-      that.callbackIfDone();
-    };
-  };
-  new _OutputDirMaker(callback).makeOutputDir(self._outP.shift());
+    new _OutputDirMaker(callback).makeOutputDir(self._outP.shift());
 };
 
 App.prototype.readTargetConfig = function (tar) {
-  var that = this,
-      _targetsJSON =
-          this._e_.path.join(this.applicationDirectory, 'targets.json');
+    var that = this,
+        _targetsJSON =
+            this._e_.path.join(this.applicationDirectory, 'targets.json');
 
-  try {
-    var targets = JSON.parse(this._e_.fs.readFileSync(_targetsJSON, 'utf8'));
+    try {
+        var targets = JSON.parse(this._e_.fs.readFileSync(_targetsJSON, 'utf8'));
 
-    if (targets) {
-      if (targets[tar.group]) {
-        var _group = targets[tar.group];
-        that.target.group = tar.group;
-        if (_group[tar.subGroup]) {
-          var _subGroup = _group[tar.subGroup];
+        if (targets) {
+            if (targets[tar.group]) {
+                var _group = targets[tar.group];
+                that.target.group = tar.group;
+                if (_group[tar.subGroup]) {
+                    var _subGroup = _group[tar.subGroup];
 
-          if (_subGroup.dedicatedResources) {
-            that.target.dedicatedResources = _subGroup.dedicatedResources;
-          } else {
-            that.reporter.warnings.push(
-                this.style.cyan('No dedicatedResources defined, for "')
-                + this.style.magenta(tar.subGroup)
-                + this.style.cyan(
-                      '" using "base" and "'+ tar.group + '" only.'));
-          };
+                    if (_subGroup.dedicatedResources) {
+                        that.target.dedicatedResources = _subGroup.dedicatedResources;
+                    } else {
+                        that.reporter.warnings.push(
+                            this.style.cyan('No dedicatedResources defined, for "')
+                                + this.style.magenta(tar.subGroup)
+                                + this.style.cyan(
+                                '" using "base" and "' + tar.group + '" only.'));
+                    }
+                    ;
 
-          if (_subGroup.htmlHeader) {
-            that.HEAD_IndexHtml = _subGroup.htmlHeader;
-          };
-        } else {
-          that.reporter.warnings.push(
-              this.style.cyan('No subGroup defined, for "')
-              + this.style.magenta(tar.subGroup)
-              + this.style.cyan('" using "base" and "'+ tar.group +'" only.'));
-        };
-      } else {
-        that.reporter.warnings.push(this.style.cyan('No group ')
-            //  + this.style.magenta(tar.group)
-            + this.style.cyan('specified, using "base" only.'));
-      };
-    };
-  } catch (ex) {
-    if (ex.code !== 'ENOENT') {
-      console.log(this.style.red('ERROR:')
-          + this.style.cyan(' - while reading "targets.json", error message: '
-          + ex.message));
-      process.exit(1);
-    };
-  };
+                    if (_subGroup.htmlHeader) {
+                        that.HEAD_IndexHtml = _subGroup.htmlHeader;
+                    }
+                    ;
+                } else {
+                    that.reporter.warnings.push(
+                        this.style.cyan('No subGroup defined, for "')
+                            + this.style.magenta(tar.subGroup)
+                            + this.style.cyan('" using "base" and "' + tar.group + '" only.'));
+                }
+                ;
+            } else {
+                that.reporter.warnings.push(this.style.cyan('No group ')
+                    //  + this.style.magenta(tar.group)
+                    + this.style.cyan('specified, using "base" only.'));
+            }
+            ;
+        }
+        ;
+    } catch (ex) {
+        if (ex.code !== 'ENOENT') {
+            console.log(this.style.red('ERROR:')
+                + this.style.cyan(' - while reading "targets.json", error message: '
+                + ex.message));
+            process.exit(1);
+        }
+        ;
+    }
+    ;
 };
 
 App.prototype.addUsedFrameworks = function (usedFrameworks) {
-  var that = this;
-  var _usedFrameworks = usedFrameworks.map(function (module) {
-    var _frameworkOptions = {};
-    _frameworkOptions.path =
-        that.applicationDirectory + '/frameworks/' + module;
-    _frameworkOptions.name = module;
-    _frameworkOptions.library = true;
-    _frameworkOptions.app = that;
-    _frameworkOptions.frDelimiter = 'modules/';
-    _frameworkOptions.excludedFolders = that.excludedFolders;
-    _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
-    _frameworkOptions.taskChain = new TaskManager([
-      "contentType",
-      "markLibrary",
-      "manifest"
-    ]).getTaskChain();
-    return new Framework(_frameworkOptions);
-  });
-  this.addFrameworks(_usedFrameworks);
+    var that = this;
+    var _usedFrameworks = usedFrameworks.map(function (module) {
+        var _frameworkOptions = {};
+        _frameworkOptions.path =
+            that.applicationDirectory + '/frameworks/' + module;
+        _frameworkOptions.name = module;
+        _frameworkOptions.library = true;
+        _frameworkOptions.app = that;
+        _frameworkOptions.frDelimiter = 'modules/';
+        _frameworkOptions.excludedFolders = that.excludedFolders;
+        _frameworkOptions.excludedFiles = ['.DS_Store'].concat(that.excludedFiles);
+        _frameworkOptions.taskChain = new TaskManager([
+            "contentType",
+            "markLibrary",
+            "manifest"
+        ]).getTaskChain();
+        return new Framework(_frameworkOptions);
+    });
+    this.addFrameworks(_usedFrameworks);
 };
 
 /**
@@ -764,91 +808,102 @@ App.prototype.addUsedFrameworks = function (usedFrameworks) {
  * @param callback that should be called after the build.
  */
 App.prototype.build = function (callback) {
-  var self = this,
-      _frameworks = [];
+    var self = this,
+        _frameworks = [];
 
-  // reset the global state
-  self.globalState = {};
+    // reset the global state
+    self.globalState = {};
 
-  if (self.htmlHeader) {
-    self.HEAD_IndexHtml = self.htmlHeader;
-  };
+    if (self.htmlHeader) {
+        self.HEAD_IndexHtml = self.htmlHeader;
+    }
+    ;
 
-  if (self.targetQuery) {
-    this.readTargetConfig(self.targetQuery);
-  };
+    if (self.targetQuery) {
+        this.readTargetConfig(self.targetQuery);
+    }
+    ;
 
-  if (self.libraries) {
-    self.libraries.forEach(function (fr) {
-      _frameworks.push(fr.name);
-    });
-
-    self.addUsedFrameworks(_frameworks);
-  };
-
-  var _AppBuilder = function (app, callback) {
-    var that = this;
-
-    /* amount of used frameworks, for this application. */
-    that._frameworkCounter = app.frameworks.length;
-
-    /* callback checker, called if all frameworks are built. */
-    that.callbackIfDone = function () {
-      if (callback && that._frameworkCounter <= 0) {
-        // console.log('build callback called !');
-        callback(null,self.frameworks);
-      };
-    };
-
-    that.build = function () {
-      console.log(self.style.green("Building components:"));
-      app.frameworks.forEach(function (framework) {
-        framework.build(function (fr) {
-          // count = -1 if a framework had been built
-          that._frameworkCounter -= 1;
-          console.log(self.style.magenta(fr.name)
-            + self.style.green(': ')
-            + self.style.cyan('done'));
-          // check if callback can be called, the condition ist that all
-          // frameworks has been build
-          that.callbackIfDone();
+    if (self.libraries) {
+        self.libraries.forEach(function (fr) {
+            _frameworks.push(fr.name);
         });
-      });
-    };
-  };
 
-  /*
-   *  Build stack:
-   *  1) Build the application
-   *   11) Build each framework
-   *  2) Build the index.html
-   *  3) Build the cache manifest, after all frameworks had been built.
-   *  4) Call callback, which leads to the next step of the build OR server
-   *     process.
-   */
-  self.sequencer(
-      function () {
-        console.log(self.style.green('Building application: "')
-          + self.style.magenta(self.name)
-          + self.style.green('"'));
-        new _AppBuilder(self, this).build();
-      },
-      function (err, frameworks) {
-        if (err) { throw err; }
-        self.buildIndexHTML(this,
-          self.librariesNamesForIndexHtml,
-          self.HEAD_IndexHtml);
-      },
-      function (err, frameworks) {
-        if (err) { throw err; }
-        self.buildManifest(this);
-      },
-      function (err, frameworks) {
-        if (err) { throw err; }
-        self.reporter.printReport();
-        callback();
-      }
-  );
+        self.addUsedFrameworks(_frameworks);
+    }
+    ;
+
+    var _AppBuilder = function (app, callback) {
+        var that = this;
+
+        /* amount of used frameworks, for this application. */
+        that._frameworkCounter = app.frameworks.length;
+
+        /* callback checker, called if all frameworks are built. */
+        that.callbackIfDone = function () {
+            if (callback && that._frameworkCounter <= 0) {
+                // console.log('build callback called !');
+                callback(null, self.frameworks);
+            }
+            ;
+        };
+
+        that.build = function () {
+            console.log('_AppBuilder');
+            console.log(self.style.green("Building components:"));
+            app.frameworks.forEach(function (framework) {
+                framework.build(function (fr) {
+                    // count = -1 if a framework had been built
+                    that._frameworkCounter -= 1;
+                    console.log(self.style.magenta(fr.name)
+                        + self.style.green(': ')
+                        + self.style.cyan('done'));
+                    // check if callback can be called, the condition ist that all
+                    // frameworks has been build
+                    that.callbackIfDone();
+                });
+            });
+        };
+    };
+
+    /*
+     *  Build stack:
+     *  1) Build the application
+     *   11) Build each framework
+     *  2) Build the index.html
+     *  3) Build the cache manifest, after all frameworks had been built.
+     *  4) Call callback, which leads to the next step of the build OR server
+     *     process.
+     */
+    self.sequencer(
+        function () {
+            console.log(self.style.green('Building application: "')
+                + self.style.magenta(self.name)
+                + self.style.green('"'));
+            new _AppBuilder(self, this).build();
+        },
+        function (err, frameworks) {
+            if (err) {
+                throw err;
+            }
+            self.buildIndexHTML(this,
+                self.librariesNamesForIndexHtml,
+                self.HEAD_IndexHtml);
+        },
+        function (err, frameworks) {
+            if (err) {
+                throw err;
+            }
+            self.buildManifest(this);
+        },
+        function (err, frameworks) {
+            if (err) {
+                throw err;
+            }
+            self.reporter.printReport();
+            callback();
+        }
+    );
 };
 
 /**
@@ -858,49 +913,51 @@ App.prototype.build = function (callback) {
  * @param callback that should be called after the build.
  */
 App.prototype.saveLocal = function (callback) {
-  var self = this;
+    var self = this;
 
-  var _AppSaver = function (app, callback) {
-    var that = this;
+    var _AppSaver = function (app, callback) {
+        var that = this;
 
-    // amount of used frameworks, for this application.
-    that._frameworkCounter = app.frameworks.length;
+        // amount of used frameworks, for this application.
+        that._frameworkCounter = app.frameworks.length;
 
-    // callback checker, called if all frameworks are build. 
-    that.callbackIfDone = function () {
-      if (callback && that._frameworkCounter <= 0) {
-        callback();
-      };
+        // callback checker, called if all frameworks are build.
+        that.callbackIfDone = function () {
+            if (callback && that._frameworkCounter <= 0) {
+                callback();
+            }
+            ;
+        };
+
+        that.save = function () {
+            app.frameworks.forEach(function (framework) {
+                framework.save(function (fr) {
+                    // count = -1 if a framework has been saved.
+                    that._frameworkCounter -= 1;
+                    that.callbackIfDone();
+                });
+            });
+        };
     };
 
-    that.save = function () {
-      app.frameworks.forEach(function (framework) {
-        framework.save(function (fr) {
-          // count = -1 if a framework has been saved.
-          that._frameworkCounter -= 1;
-          that.callbackIfDone();
-        });
-      });
-    };
-  };
-
-  /*
-   *  build batch:
-   *  1) make output folder structure first.
-   *  2) Call AppSaver to write the application data, into the
-   *     just generated file structure.
-   *  3) Call callback, which prompts the massage: 'Saved application to filesystem!'.
-   */
-  this.makeOutputFolder(function () {
-    new _AppSaver(self, function () {
-      console.log('\n');
-      console.log(self.style.green('saving application to filesystem!'));
-      console.log("\n");
-      if (typeof callback === 'function') {
-        callback();
-      };
-    }).save();
-  });
+    /*
+     *  build batch:
+     *  1) make output folder structure first.
+     *  2) Call AppSaver to write the application data, into the
+     *     just generated file structure.
+     *  3) Call callback, which prompts the massage: 'Saved application to filesystem!'.
+     */
+    this.makeOutputFolder(function () {
+        new _AppSaver(self, function () {
+            console.log('\n');
+            console.log(self.style.green('saving application to filesystem!'));
+            console.log("\n");
+            if (typeof callback === 'function') {
+                callback();
+            }
+            ;
+        }).save();
+    });
 };
 
 /**
@@ -909,36 +966,37 @@ App.prototype.saveLocal = function (callback) {
  * @param callback
  */
 App.prototype.prepareForServer = function (callback) {
-  var self = this;
+    var self = this;
 
-  var _AppPreparer = function (app, callback) {
-    var that = this;
+    var _AppPreparer = function (app, callback) {
+        var that = this;
 
-    // amount of used frameworks, for this application.
-    that._frameworkCounter = app.frameworks.length; 
+        // amount of used frameworks, for this application.
+        that._frameworkCounter = app.frameworks.length;
 
-    // callback checker, called if all frameworks are build. */
-    that.callbackIfDone = function () {
-      if (callback && that._frameworkCounter <= 0) {
-        callback();
-      };
+        // callback checker, called if all frameworks are build. */
+        that.callbackIfDone = function () {
+            if (callback && that._frameworkCounter <= 0) {
+                callback();
+            }
+            ;
+        };
+
+        that.prepareForServer = function () {
+            app.frameworks.forEach(function (framework) {
+                framework.prepareForServer(self.server, function () {
+                    that._frameworkCounter -= 1;
+                    that.callbackIfDone();
+                });
+            });
+        };
     };
 
-    that.prepareForServer = function () {
-      app.frameworks.forEach(function (framework) {
-        framework.prepareForServer(self.server, function () {
-          that._frameworkCounter -= 1;
-          that.callbackIfDone();
-        });
-      });
-    };
-  };
+    console.log('\n');
+    console.log(self.style.green('=== Server log:'));
+    console.log('\n');
 
-  console.log('\n');
-  console.log(self.style.green('=== Server log:'));
-  console.log('\n');
-
-  new _AppPreparer(self, callback).prepareForServer();
+    new _AppPreparer(self, callback).prepareForServer();
 };
 
 /**
@@ -953,8 +1011,9 @@ App.prototype.prepareForServer = function (callback) {
  * @param {number} debug level
  */
 App.prototype.log = function (level) {
-  if (this.mode === "debug" && level <= this.debugLevel) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return console.log.apply(this, args);
-  };
+    if (this.mode === "debug" && level <= this.debugLevel) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return console.log.apply(this, args);
+    }
+    ;
 };
