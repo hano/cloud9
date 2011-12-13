@@ -52,3 +52,6 @@
 [submodule "server/cloud9/ext/themproject/espresso/node_modules/mu"]
 	path = server/cloud9/ext/themproject/espresso/node_modules/mu
 	url = https://github.com/raycmorgan/Mu
+[submodule "server/cloud9/ext/themproject/espresso/node_modules/narcissus"]
+	path = server/cloud9/ext/themproject/espresso/node_modules/narcissus
+	url = https://github.com/mozilla/narcissus.git
