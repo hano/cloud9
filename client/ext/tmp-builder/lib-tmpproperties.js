@@ -24,6 +24,7 @@ define(
                 }
 
                 this.update = function(data) {
+                    return;
                     var that = this;
                     var x = 0;
 //                    this.propertiesPage.childNodes.forEach(function(obj) {
