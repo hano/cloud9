@@ -176,9 +176,10 @@ define(function(require, exports, module) {
             if (self.winTmpBuilder) {
 //                the path to the current source code
 //                TODO path must be set dynamically
-                var path = appPath + 'new_main.js';
+//                removed that - because we can't identify the corresponding file
+//                var path = appPath + 'new_main.js';
 //                show the source file
-                editors.showFile(path, 0, 0);
+//                editors.showFile(path, 0, 0);
                 //ide.dispatchEvent("track_action", {type: "fileopen"});
 //                show the browser
                 winTmpBuilder.show();
